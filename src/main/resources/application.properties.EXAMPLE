@@ -1,0 +1,18 @@
+# nats server
+nats.clusterid=
+nats.clientid=
+nats.url=
+
+# messaging configuration
+num.new_request_handler_threads=1
+cmo.new_request_topic=
+metadb.publishing_failures_filepath=
+
+
+# cpt configuration
+cpt.authorization_token=
+cpt.session_token_url=
+cpt.create_record_url=
+cpt.cmo_project_request_post_failures_filepath=
+// milliseconds
+cpt.post_timeouts=
