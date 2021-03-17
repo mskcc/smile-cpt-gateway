@@ -5,14 +5,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
-import org.apache.log4j.Logger;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLContexts;
-import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.log4j.Logger;
 import org.mskcc.cmo.metadb.cpt_gateway.service.CPTFileService;
 import org.mskcc.cmo.metadb.cpt_gateway.service.CPTService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,10 +59,12 @@ public class CPTServiceImpl implements CPTService {
             postBody = getPostBody(request);
             HttpEntity requestEntity = new HttpEntity<Object>(postBody, headers);
             RestTemplate restTemplate = getRestTemplate();
-            ResponseEntity responseEntity = restTemplate.exchange(CPT_CREATE_RECORD_URL,
-                                                                  HttpMethod.POST, requestEntity, Object.class);
+            ResponseEntity responseEntity =
+                restTemplate.exchange(CPT_CREATE_RECORD_URL,
+                                      HttpMethod.POST, requestEntity, Object.class);
             if (!responseEntity.getStatusCode().is2xxSuccessful()) {
-                cptFileService.saveCMOProjectRequestPostFailure(responseEntity.getStatusCode().toString(), postBody);
+                cptFileService.saveCMOProjectRequestPostFailure(responseEntity.getStatusCode().toString(),
+                                                                postBody);
                 if (LOG.isInfoEnabled()) {
                     LOG.info("Unsuccessful post IGO Request: " + getRequestId(request));
                 }
@@ -83,7 +85,8 @@ public class CPTServiceImpl implements CPTService {
         if (igoRequestID.length() > 0) {
             // this is to avoid filemaker data api error 1708
             String escapedRequest = request.replace("\"", "\\\"");
-            return "{\"fieldData\":{\"projectBatchNumber\": \"" + igoRequestID + "\",\"requestJSON\": " + escapedRequest + "}}";
+            return "{\"fieldData\":{\"projectBatchNumber\": \""
+                + igoRequestID + "\",\"requestJSON\": " + escapedRequest + "}}";
         }
         throw new RuntimeException("Error parsing request, cannot find requestId.", new Throwable(request));
     }
@@ -121,15 +124,16 @@ public class CPTServiceImpl implements CPTService {
         SSLContext sslContext = SSLContexts.custom().loadTrustMaterial(null, acceptingTrustStrategy).build();
         SSLConnectionSocketFactory csf = new SSLConnectionSocketFactory(sslContext, hostnameVerifier);
         CloseableHttpClient httpClient = HttpClients.custom().setSSLSocketFactory(csf).build();
-        RequestConfig requestConfig = RequestConfig.custom().
+        RequestConfig requestConfig = RequestConfig.custom()
             // time to wait for a connection from pool
-            setConnectionRequestTimeout(CPT_POST_TIMEOUTS).
+            .setConnectionRequestTimeout(CPT_POST_TIMEOUTS)
             // time to establish connection with remote
-            setConnectTimeout(CPT_POST_TIMEOUTS).
+            .setConnectTimeout(CPT_POST_TIMEOUTS)
             // time waiting for data
-            setSocketTimeout(CPT_POST_TIMEOUTS).build();
+            .setSocketTimeout(CPT_POST_TIMEOUTS).build();
         HttpClientBuilder builder = HttpClientBuilder.create().setDefaultRequestConfig(requestConfig);
-        HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(builder.build());
+        HttpComponentsClientHttpRequestFactory requestFactory =
+            new HttpComponentsClientHttpRequestFactory(builder.build());
         requestFactory.setHttpClient(httpClient);
         return new RestTemplate(requestFactory);
     }
