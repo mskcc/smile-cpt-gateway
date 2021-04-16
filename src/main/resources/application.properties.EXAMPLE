@@ -1,7 +1,14 @@
 # nats server
-nats.clusterid=
-nats.clientid=
+nats.consumer_name=
+nats.consumer_password=
 nats.url=
+
+# nats ssl
+nats.tls_channel=
+nats.keystore_path=
+nats.truststore_path=
+nats.key_password=
+nats.store_password=
 
 # messaging configuration
 num.new_request_handler_threads=1
