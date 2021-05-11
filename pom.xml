@@ -40,7 +40,7 @@
     <spring.boot.version>2.3.3.RELEASE</spring.boot.version>
     <!-- metadb messaging and shared entities dependency versions -->
     <cmo_metadb_messaging_java.group>com.github.mskcc</cmo_metadb_messaging_java.group>
-    <cmo_metadb_messaging_java.version>309b4f823871a4d02e7b5a421bd65e2b7886a3d2</cmo_metadb_messaging_java.version>
+    <cmo_metadb_messaging_java.version>21cd141496f10112e3c670af91a85ca54ae2c70e</cmo_metadb_messaging_java.version>
     <!-- metadb common centralized config properties -->
     <cmo_metadb_common.groupId>com.github.mskcc</cmo_metadb_common.groupId>
     <cmo_metadb_common.version>v1.4-alpha</cmo_metadb_common.version>
