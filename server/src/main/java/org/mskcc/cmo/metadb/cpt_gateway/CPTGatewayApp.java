@@ -1,6 +1,8 @@
 package org.mskcc.cmo.metadb.cpt_gateway;
 
 import java.util.concurrent.CountDownLatch;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.mskcc.cmo.messaging.Gateway;
 import org.mskcc.cmo.metadb.cpt_gateway.service.MessageHandlingService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,7 +12,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication(scanBasePackages = {"org.mskcc.cmo.messaging", "org.mskcc.cmo.metadb.cpt_gateway.*"})
 public class CPTGatewayApp implements CommandLineRunner {
-
+    private static final Log LOG = LogFactory.getLog(CPTGatewayApp.class);
     @Autowired
     private Gateway messagingGateway;
 
@@ -22,12 +24,12 @@ public class CPTGatewayApp implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        System.out.println("Starting up MetaDB CPT Gateway...");
+        LOG.info("Starting up MetaDB CPT Gateway...");
         try {
             installShutdownHook();
             messagingGateway.connect();
             messageHandlingService.initialize(messagingGateway);
-            System.out.println("Starting up MetaDB CPT Gateway complete...");
+            LOG.info("Starting up MetaDB CPT Gateway complete...");
             cptGatewayClose.await();
         } catch (Exception e) {
             e.printStackTrace();
