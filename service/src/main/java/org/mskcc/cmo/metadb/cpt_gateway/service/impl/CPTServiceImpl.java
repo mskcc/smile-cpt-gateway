@@ -5,6 +5,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLContexts;
@@ -12,7 +14,6 @@ import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.log4j.Logger;
 import org.mskcc.cmo.metadb.cpt_gateway.service.CPTFileService;
 import org.mskcc.cmo.metadb.cpt_gateway.service.CPTService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,7 +48,7 @@ public class CPTServiceImpl implements CPTService {
     @Autowired
     CPTFileService cptFileService;
 
-    private Logger LOG = Logger.getLogger(CPTServiceImpl.class);
+    private static final Log LOG = LogFactory.getLog(CPTServiceImpl.class);
 
     @Override
     public void pushCMORequest(String request) throws Exception {
