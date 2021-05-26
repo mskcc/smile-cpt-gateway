@@ -39,9 +39,6 @@ public class CPTServiceImpl implements CPTService {
     @Value("${cpt.session_token_url}")
     private String CPT_SESSION_TOKEN_URL;
 
-    @Value("${cpt.create_record_url}")
-    private String CPT_CREATE_RECORD_URL;
-
     @Value("${cpt.authorization_token}")
     private String CPT_AUTHORIZATION_TOKEN;
 
@@ -51,7 +48,7 @@ public class CPTServiceImpl implements CPTService {
     private static final Log LOG = LogFactory.getLog(CPTServiceImpl.class);
 
     @Override
-    public void pushCMORequest(String request) throws Exception {
+    public void pushRecord(String request, String cptDestination) throws Exception {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(getSessionToken());
@@ -61,7 +58,7 @@ public class CPTServiceImpl implements CPTService {
             HttpEntity requestEntity = new HttpEntity<Object>(postBody, headers);
             RestTemplate restTemplate = getRestTemplate();
             ResponseEntity responseEntity =
-                restTemplate.exchange(CPT_CREATE_RECORD_URL,
+                restTemplate.exchange(cptDestination,
                                       HttpMethod.POST, requestEntity, Object.class);
             if (!responseEntity.getStatusCode().is2xxSuccessful()) {
                 cptFileService.saveCMOProjectRequestPostFailure(responseEntity.getStatusCode().toString(),

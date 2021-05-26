@@ -21,8 +21,20 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
     @Value("${cmo.new_request_topic}")
     private String CMO_NEW_REQUEST_TOPIC;
 
+    @Value("${igo.request_status_topic}")
+    private String IGO_REQUEST_STATUS_TOPIC;
+
     @Value("${num.new_request_handler_threads}")
     private int NUM_NEW_REQUEST_HANDLERS;
+
+    @Value("${num.request_status_handler_threads}")
+    private int NUM_REQUEST_STATUS_HANDLERS;
+
+    @Value("${cpt.create_record_url}")
+    private String CPT_CREATE_RECORD_URL;
+
+    @Value("${cpt.sample_status_record_url}")
+    private String CPT_SAMPLE_STATUS_RECORD_URL;
 
     @Autowired
     private CPTService cptService;
@@ -33,15 +45,25 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
     private static final BlockingQueue<String> newRequestQueue =
         new LinkedBlockingQueue<String>();
     private static CountDownLatch newRequestHandlerShutdownLatch;
+    private static final BlockingQueue<String> requestStatusQueue =
+        new LinkedBlockingQueue<String>();
+    private static CountDownLatch requestStatusHandlerShutdownLatch;
     private static Gateway messagingGateway;
 
-    private class NewCMORequestHandler implements Runnable {
+    private class CPTHandler implements Runnable {
 
         final Phaser phaser;
         boolean interrupted = false;
+        final String cptDestination;
+        final BlockingQueue<String> requestQueue;
+        final CountDownLatch shutdownLatch;
 
-        NewCMORequestHandler(Phaser phaser) {
+        CPTHandler(Phaser phaser, String cptDestination,
+                   BlockingQueue<String> requestQueue, CountDownLatch shutdownLatch) {
             this.phaser = phaser;
+            this.cptDestination = cptDestination;
+            this.requestQueue = requestQueue;
+            this.shutdownLatch = shutdownLatch;
         }
 
         @Override
@@ -49,11 +71,11 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
             phaser.arrive();
             while (true) {
                 try {
-                    String request = newRequestQueue.poll(100, TimeUnit.MILLISECONDS);
+                    String request = requestQueue.poll(100, TimeUnit.MILLISECONDS);
                     if (request != null) {
-                        cptService.pushCMORequest(request);
+                        cptService.pushRecord(request, cptDestination);
                     }
-                    if (interrupted && newRequestQueue.isEmpty()) {
+                    if (interrupted && requestQueue.isEmpty()) {
                         break;
                     }
                 } catch (InterruptedException e) {
@@ -63,7 +85,7 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                     e.printStackTrace();
                 }
             }
-            newRequestHandlerShutdownLatch.countDown();
+            shutdownLatch.countDown();
         }
     }
 
@@ -72,7 +94,9 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
         if (!initialized) {
             messagingGateway = gateway;
             setupCMONewRequestSubscriber(messagingGateway, this);
+            setupIGORequestStatusSubscriber(messagingGateway, this);
             initializeNewRequestHandlers();
+            initializeRequestStatusHandlers();
             initialized = true;
         } else {
             System.err.printf("Messaging Handler Service has already been initialized, ignoring request.\n");
@@ -80,17 +104,31 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
     }
 
     @Override
-    public void newRequestHandler(String request) throws Exception {
+    public void newRequestHandler(String newRequest) throws Exception {
         if (!initialized) {
             throw new IllegalStateException("Message Handling Service has not been initialized");
         }
         if (!shutdownInitiated) {
-            newRequestQueue.put(request);
+            newRequestQueue.put(newRequest);
         } else {
-            System.err.printf("Shutdown initiated, not accepting request: %s\n", request);
+            System.err.printf("Shutdown initiated, not accepting request: %s\n", newRequest);
             throw new IllegalStateException("Shutdown initiated, not handling any more requests");
         }
     }
+
+    @Override
+    public void requestStatusHandler(String requestStatus) throws Exception {
+        if (!initialized) {
+            throw new IllegalStateException("Message Handling Service has not been initialized");
+        }
+        if (!shutdownInitiated) {
+            requestStatusQueue.put(requestStatus);
+        } else {
+            System.err.printf("Shutdown initiated, not accepting request: %s\n", requestStatus);
+            throw new IllegalStateException("Shutdown initiated, not handling any more requests");
+        }
+    }
+
 
     @Override
     public void shutdown() throws Exception {
@@ -99,6 +137,7 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
         }
         exec.shutdownNow();
         newRequestHandlerShutdownLatch.await();
+        requestStatusHandlerShutdownLatch.await();
         shutdownInitiated = true;
     }
 
@@ -108,9 +147,22 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
         newRequestPhaser.register();
         for (int lc = 0; lc < NUM_NEW_REQUEST_HANDLERS; lc++) {
             newRequestPhaser.register();
-            exec.execute(new NewCMORequestHandler(newRequestPhaser));
+            exec.execute(new CPTHandler(newRequestPhaser, CPT_CREATE_RECORD_URL,
+                                        newRequestQueue, newRequestHandlerShutdownLatch));
         }
         newRequestPhaser.arriveAndAwaitAdvance();
+    }
+
+    private void initializeRequestStatusHandlers() throws Exception {
+        requestStatusHandlerShutdownLatch = new CountDownLatch(NUM_REQUEST_STATUS_HANDLERS);
+        final Phaser requestStatusPhaser = new Phaser();
+        requestStatusPhaser.register();
+        for (int lc = 0; lc < NUM_REQUEST_STATUS_HANDLERS; lc++) {
+            requestStatusPhaser.register();
+            exec.execute(new CPTHandler(requestStatusPhaser, CPT_SAMPLE_STATUS_RECORD_URL,
+                                        requestStatusQueue, requestStatusHandlerShutdownLatch));
+        }
+        requestStatusPhaser.arriveAndAwaitAdvance();
     }
 
     private void setupCMONewRequestSubscriber(Gateway gateway, MessageHandlingService messageHandlingService)
@@ -127,4 +179,20 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
             }
         });
     }
+    private void setupIGORequestStatusSubscriber(Gateway gateway,
+                                                 MessageHandlingService messageHandlingService)
+        throws Exception {
+        gateway.subscribe(IGO_REQUEST_STATUS_TOPIC, Object.class, new MessageConsumer() {
+            public void onMessage(Object message) {
+                try {
+                    messageHandlingService.requestStatusHandler(message.toString());
+                } catch (Exception e) {
+                    System.err.printf("Cannot process IGO_REQUEST_STATUS:\n%s\n", message);
+                    System.err.printf("Exception during processing:\n%s\n", e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
 }
