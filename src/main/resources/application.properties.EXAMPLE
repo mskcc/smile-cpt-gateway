@@ -2,6 +2,7 @@
 nats.consumer_name=
 nats.consumer_password=
 nats.url=
+nats.filter_subject=
 
 # nats ssl
 nats.tls_channel=
@@ -13,12 +14,15 @@ nats.store_password=
 # messaging configuration
 num.new_request_handler_threads=1
 cmo.new_request_topic=
+num.request_status_handler_threads=1
+igo.request_status_topic=
 metadb.publishing_failures_filepath=
 
 # cpt configuration
 cpt.authorization_token=
 cpt.session_token_url=
 cpt.create_record_url=
+cpt.sample_status_record_url=
 cpt.cmo_project_request_post_failures_filepath=
 // in milliseconds (see CPTServiceImpl.java)
 cpt.post_timeouts=

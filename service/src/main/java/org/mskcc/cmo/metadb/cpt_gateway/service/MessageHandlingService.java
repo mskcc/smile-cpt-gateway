@@ -8,5 +8,7 @@ public interface MessageHandlingService {
 
     void newRequestHandler(String request) throws Exception;
 
+    void requestStatusHandler(String requestStatus) throws Exception;
+
     void shutdown() throws Exception;
 }
