@@ -1,5 +1,8 @@
 package org.mskcc.cmo.metadb.cpt_gateway.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.nats.client.Message;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -7,6 +10,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Phaser;
 import java.util.concurrent.TimeUnit;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.mskcc.cmo.messaging.Gateway;
 import org.mskcc.cmo.messaging.MessageConsumer;
 import org.mskcc.cmo.metadb.cpt_gateway.service.CPTService;
@@ -17,6 +22,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class MessageHandlingServiceImpl implements MessageHandlingService {
+    private static final Log LOG = LogFactory.getLog(MessageHandlingServiceImpl.class);
 
     @Value("${cmo.new_request_topic}")
     private String CMO_NEW_REQUEST_TOPIC;
@@ -49,6 +55,7 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
         new LinkedBlockingQueue<String>();
     private static CountDownLatch requestStatusHandlerShutdownLatch;
     private static Gateway messagingGateway;
+    private final ObjectMapper mapper = new ObjectMapper();
 
     private class CPTHandler implements Runnable {
 
@@ -81,7 +88,7 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                 } catch (InterruptedException e) {
                     interrupted = true;
                 } catch (Exception e) {
-                    System.err.printf("Error during request handling: %s\n", e.getMessage());
+                    LOG.error("Error during request handling: ", e);
                     e.printStackTrace();
                 }
             }
@@ -99,7 +106,7 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
             initializeRequestStatusHandlers();
             initialized = true;
         } else {
-            System.err.printf("Messaging Handler Service has already been initialized, ignoring request.\n");
+            LOG.error("Messaging Handler Service has already been initialized, ignoring request");
         }
     }
 
@@ -111,7 +118,7 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
         if (!shutdownInitiated) {
             newRequestQueue.put(newRequest);
         } else {
-            System.err.printf("Shutdown initiated, not accepting request: %s\n", newRequest);
+            LOG.error("Shutdown initiated, not accepting request: \n" + newRequest);
             throw new IllegalStateException("Shutdown initiated, not handling any more requests");
         }
     }
@@ -124,7 +131,7 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
         if (!shutdownInitiated) {
             requestStatusQueue.put(requestStatus);
         } else {
-            System.err.printf("Shutdown initiated, not accepting request: %s\n", requestStatus);
+            LOG.error("Shutdown initiated, not accepting request");
             throw new IllegalStateException("Shutdown initiated, not handling any more requests");
         }
     }
@@ -168,13 +175,15 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
     private void setupCMONewRequestSubscriber(Gateway gateway, MessageHandlingService messageHandlingService)
         throws Exception {
         gateway.subscribe(CMO_NEW_REQUEST_TOPIC, Object.class, new MessageConsumer() {
-            public void onMessage(Object message) {
+            public void onMessage(Message msg, Object message) {
                 try {
-                    messageHandlingService.newRequestHandler(message.toString());
+                    messageHandlingService.newRequestHandler(
+                            mapper.readValue(
+                            new String(msg.getData(), StandardCharsets.UTF_8),
+                            String.class)
+                    );
                 } catch (Exception e) {
-                    System.err.printf("Cannot process CMO_NEW_REQUEST:\n%s\n", message);
-                    System.err.printf("Exception during processing:\n%s\n", e.getMessage());
-                    e.printStackTrace();
+                    LOG.error("Cannot process CMO_NEW_REQUEST: " + message.toString(), e);
                 }
             }
         });
@@ -183,13 +192,15 @@ public class MessageHandlingServiceImpl implements MessageHandlingService {
                                                  MessageHandlingService messageHandlingService)
         throws Exception {
         gateway.subscribe(IGO_REQUEST_STATUS_TOPIC, Object.class, new MessageConsumer() {
-            public void onMessage(Object message) {
+            public void onMessage(Message msg, Object message) {
                 try {
-                    messageHandlingService.requestStatusHandler(message.toString());
+                    messageHandlingService.requestStatusHandler(
+                            mapper.readValue(
+                            new String(msg.getData(), StandardCharsets.UTF_8),
+                            String.class)
+                    );
                 } catch (Exception e) {
-                    System.err.printf("Cannot process IGO_REQUEST_STATUS:\n%s\n", message);
-                    System.err.printf("Exception during processing:\n%s\n", e.getMessage());
-                    e.printStackTrace();
+                    LOG.error("Cannot process IGO_REQUEST_STATUS_TOPIC: " + message.toString(), e);
                 }
             }
         });
