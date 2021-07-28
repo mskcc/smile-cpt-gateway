@@ -3,6 +3,7 @@ nats.consumer_name=
 nats.consumer_password=
 nats.url=
 nats.filter_subject=
+nats.request_wait_time_in_seconds=
 
 # nats ssl
 nats.tls_channel=
