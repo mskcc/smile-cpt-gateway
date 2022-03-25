@@ -1,16 +1,16 @@
-package org.mskcc.cmo.metadb.cpt_gateway;
+package org.mskcc.smile.cpt_gateway;
 
 import java.util.concurrent.CountDownLatch;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.cmo.messaging.Gateway;
-import org.mskcc.cmo.metadb.cpt_gateway.service.MessageHandlingService;
+import org.mskcc.smile.cpt_gateway.service.MessageHandlingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@SpringBootApplication(scanBasePackages = {"org.mskcc.cmo.messaging", "org.mskcc.cmo.metadb.cpt_gateway.*"})
+@SpringBootApplication(scanBasePackages = {"org.mskcc.cmo.messaging", "org.mskcc.smile.cpt_gateway.*"})
 public class CPTGatewayApp implements CommandLineRunner {
     private static final Log LOG = LogFactory.getLog(CPTGatewayApp.class);
     @Autowired
@@ -24,12 +24,12 @@ public class CPTGatewayApp implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        LOG.info("Starting up MetaDB CPT Gateway...");
+        LOG.info("Starting up SMILE CPT Gateway...");
         try {
             installShutdownHook();
             messagingGateway.connect();
             messageHandlingService.initialize(messagingGateway);
-            LOG.info("Starting up MetaDB CPT Gateway complete...");
+            LOG.info("Starting up SMILE CPT Gateway complete...");
             cptGatewayClose.await();
         } catch (Exception e) {
             e.printStackTrace();

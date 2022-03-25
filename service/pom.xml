@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <name>MSKCC CMO MetaDB CPT Gateway Service</name>
-  <description>MSKCC CMO MetaDB CPT Gateway Service</description>
+  <name>SMILE CPT Gateway Service</name>
+  <description>SMILE CPT Gateway Service</description>
   <artifactId>service</artifactId>
   <version>0.1.0</version>
   <packaging>jar</packaging>
   <parent>
-    <groupId>org.mskcc.cmo.metadb.cpt_gateway</groupId>
+    <groupId>org.mskcc.smile.cpt_gateway</groupId>
     <artifactId>master</artifactId>
     <version>0.1.0</version>
   </parent>

@@ -1,4 +1,4 @@
-package org.mskcc.cmo.metadb.cpt_gateway.service.impl;
+package org.mskcc.smile.cpt_gateway.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.nats.client.Message;
@@ -14,8 +14,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mskcc.cmo.messaging.Gateway;
 import org.mskcc.cmo.messaging.MessageConsumer;
-import org.mskcc.cmo.metadb.cpt_gateway.service.CPTService;
-import org.mskcc.cmo.metadb.cpt_gateway.service.MessageHandlingService;
+import org.mskcc.smile.cpt_gateway.service.CPTService;
+import org.mskcc.smile.cpt_gateway.service.MessageHandlingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
