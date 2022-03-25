@@ -1,4 +1,4 @@
-package org.mskcc.cmo.metadb.cpt_gateway.service.impl;
+package org.mskcc.smile.cpt_gateway.service.impl;
 
 import java.security.cert.X509Certificate;
 import java.util.regex.Matcher;
@@ -14,8 +14,8 @@ import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
-import org.mskcc.cmo.metadb.cpt_gateway.service.CPTFileService;
-import org.mskcc.cmo.metadb.cpt_gateway.service.CPTService;
+import org.mskcc.smile.cpt_gateway.service.CPTFileService;
+import org.mskcc.smile.cpt_gateway.service.CPTService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;

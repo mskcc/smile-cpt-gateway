@@ -1,4 +1,4 @@
-package org.mskcc.cmo.metadb.cpt_gateway.service.impl;
+package org.mskcc.smile.cpt_gateway.service.impl;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -6,7 +6,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import org.mskcc.cmo.metadb.cpt_gateway.service.CPTFileService;
+import org.mskcc.smile.cpt_gateway.service.CPTFileService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 

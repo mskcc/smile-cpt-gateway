@@ -1,6 +1,6 @@
-# CMO MetaDB CPT Gateway 🔍
+# SMILE CPT Gateway 🔍
 
-The CPT Gateway is a downstream subscriber to any new messages processed/persisted by CMO METADB.
+The CPT Gateway is a downstream subscriber to any new messages processed/persisted by SMILE.
 
 ## Run
 
@@ -32,7 +32,7 @@ mvn clean install
 Run with 
 
 ```
-java -jar server/target/cmo_metadb_cpt_gateway.jar
+java -jar server/target/smile_cpt_gateway.jar
 ```
 
 ### With Docker
@@ -57,7 +57,7 @@ If the Docker image is built with the properties baked in then simply run with:
 
 ```
 docker run --name cpt-gateway <repo>/<tag>:<version> \
-	-jar /cpt-gateway/cmo_metadb_cpt_gateway.jar
+	-jar /cpt-gateway/smile_cpt_gateway.jar
 ```
 
 Otherwise use a bind mount to make the local files available to the Docker image and add  `--spring.config.location` to the java arg
@@ -65,6 +65,6 @@ Otherwise use a bind mount to make the local files available to the Docker image
 ```
 docker run --mount type=bind,source=<local path to properties files>,target=/cpt-gateway/src/main/resources \
 	--name cpt-gateway <repo>/<tag>:<version> \
-	-jar /cpt-gateway/cmo_metadb_cpt_gateway.jar \
+	-jar /cpt-gateway/smile_cpt_gateway.jar \
 	--spring.config.location=/cpt-gateway/src/main/resources/application.properties
 ```

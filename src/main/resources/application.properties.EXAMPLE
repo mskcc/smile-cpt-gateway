@@ -17,7 +17,7 @@ num.new_request_handler_threads=1
 cmo.new_request_topic=
 num.request_status_handler_threads=1
 igo.request_status_topic=
-metadb.publishing_failures_filepath=
+smile.publishing_failures_filepath=
 
 # cpt configuration
 cpt.authorization_token=
