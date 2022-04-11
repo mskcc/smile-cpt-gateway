@@ -17,7 +17,7 @@ public class CPTFileServiceImpl implements CPTFileService {
     private String filePath;
 
     @Override
-    public void saveCMOProjectRequestPostFailure(String reason, String postContent) throws IOException {
+    public void saveCPTPostFailure(String reason, String postContent) throws IOException {
         File logFile = new File(filePath);
         if (!logFile.exists()) {
             logFile.createNewFile();

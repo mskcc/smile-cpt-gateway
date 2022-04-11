@@ -13,8 +13,14 @@ nats.key_password=
 nats.store_password=
 
 # messaging configuration
+num.promoted_request_handler_threads=1
+cmo.promoted_request_topic=
 num.new_request_handler_threads=1
 cmo.new_request_topic=
+num.update_request_handler_threads=1
+cmo.update_request_topic=
+num.update_sample_handler_threads=1
+cmo.update_sample_topic=
 num.request_status_handler_threads=1
 igo.request_status_topic=
 smile.publishing_failures_filepath=
@@ -22,7 +28,10 @@ smile.publishing_failures_filepath=
 # cpt configuration
 cpt.authorization_token=
 cpt.session_token_url=
-cpt.create_record_url=
+cpt.promoted_request_record_url=
+cpt.new_request_record_url=
+cpt.update_request_record_url=
+cpt.update_sample_record_url=
 cpt.sample_status_record_url=
 cpt.cmo_project_request_post_failures_filepath=
 // in milliseconds (see CPTServiceImpl.java)

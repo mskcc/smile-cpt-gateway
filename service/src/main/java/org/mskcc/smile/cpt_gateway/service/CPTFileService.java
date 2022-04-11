@@ -4,5 +4,5 @@ import java.io.IOException;
 
 public interface CPTFileService {
     
-    void saveCMOProjectRequestPostFailure(String reason, String postContent) throws IOException;
+    void saveCPTPostFailure(String reason, String postContent) throws IOException;
 }

@@ -6,7 +6,13 @@ public interface MessageHandlingService {
 
     void initialize(Gateway gateway) throws Exception;
 
-    void newRequestHandler(String request) throws Exception;
+    void promotedRequestHandler(String promotedRequest) throws Exception;
+
+    void newRequestHandler(String newRequest) throws Exception;
+    
+    void updateRequestHandler(String updateRequest) throws Exception;
+
+    void updateSampleHandler(String updateSample) throws Exception;
 
     void requestStatusHandler(String requestStatus) throws Exception;
 

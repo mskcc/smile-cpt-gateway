@@ -31,7 +31,24 @@ import org.springframework.web.client.RestTemplate;
 public class CPTServiceImpl implements CPTService {
 
     private static final Pattern CPT_TOKEN_REGEX = Pattern.compile(".*token=(\\w+).*");
-    private static final Pattern IGO_REQUEST_ID_REGEX = Pattern.compile(".*requestId\":\"(\\w+).*");
+    private static final Pattern IGO_REQUEST_TRACKER_ID_REGEX = Pattern.compile(".*requestId\":\"(\\w+).*");
+    private static final Pattern IGO_REQUEST_ID_REGEX = Pattern.compile(".*igoRequestId\":\"(\\w+).*");
+    private static final Pattern IGO_SAMPLE_ID_REGEX = Pattern.compile(".*sampleName\":\"(\\w+).*");
+
+    @Value("${cpt.promoted_request_record_url}")
+    private String CPT_PROMOTED_REQUEST_RECORD_URL;
+
+    @Value("${cpt.new_request_record_url}")
+    private String CPT_NEW_REQUEST_RECORD_URL;
+
+    @Value("${cpt.update_request_record_url:}")
+    private String CPT_UPDATE_REQUEST_RECORD_URL;
+
+    @Value("${cpt.update_sample_record_url:}")
+    private String CPT_UPDATE_SAMPLE_RECORD_URL;
+
+    @Value("${cpt.sample_status_record_url}")
+    private String CPT_SAMPLE_STATUS_RECORD_URL;
 
     @Value("${cpt.post_timeouts}")
     private int CPT_POST_TIMEOUTS;
@@ -47,54 +64,105 @@ public class CPTServiceImpl implements CPTService {
 
     private static final Log LOG = LogFactory.getLog(CPTServiceImpl.class);
 
+    public static enum CPTRecordDest {
+        PROMOTED_REQUEST_RECORD_DEST,
+        NEW_REQUEST_RECORD_DEST,
+        UPDATE_REQUEST_RECORD_DEST,
+        UPDATE_SAMPLE_RECORD_DEST,
+        SAMPLE_STATUS_RECORD_DEST;
+    }
+
     @Override
-    public void pushRecord(String request, String cptDestination) throws Exception {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(getSessionToken());
-        String postBody = "";
-        try {
-            postBody = getPostBody(request);
-            HttpEntity requestEntity = new HttpEntity<Object>(postBody, headers);
-            RestTemplate restTemplate = getRestTemplate();
-            ResponseEntity responseEntity =
-                restTemplate.exchange(cptDestination,
-                                      HttpMethod.POST, requestEntity, Object.class);
-            if (!responseEntity.getStatusCode().is2xxSuccessful()) {
-                cptFileService.saveCMOProjectRequestPostFailure(responseEntity.getStatusCode().toString(),
-                                                                postBody);
-                if (LOG.isInfoEnabled()) {
-                    LOG.info("Unsuccessful post IGO Request: " + getRequestId(request));
-                }
-            } else if (LOG.isInfoEnabled()) {
-                LOG.info("Successfully posted IGO Request: " + getRequestId(request));
-            }
-        } catch (Exception e) {
-            if (postBody.equals("")) {
-                cptFileService.saveCMOProjectRequestPostFailure(e.getMessage(), e.getCause().getMessage());
-            } else {
-                cptFileService.saveCMOProjectRequestPostFailure(e.getMessage(), postBody);
-            }
+    public void pushRecord(String record, CPTRecordDest recordDest) throws Exception {
+        switch (recordDest) {
+            case PROMOTED_REQUEST_RECORD_DEST:
+                postToCPT(getEntityId(record, IGO_REQUEST_ID_REGEX),
+                          getRequestPostBody(record), CPT_PROMOTED_REQUEST_RECORD_URL);
+                break;
+            case NEW_REQUEST_RECORD_DEST:
+                postToCPT(getEntityId(record, IGO_REQUEST_ID_REGEX),
+                          getRequestPostBody(record), CPT_NEW_REQUEST_RECORD_URL);
+                break;
+            case UPDATE_REQUEST_RECORD_DEST:
+                postToCPT(getEntityId(record, IGO_REQUEST_ID_REGEX),
+                          getRequestPostBody(record), CPT_UPDATE_REQUEST_RECORD_URL);
+                break;
+            case UPDATE_SAMPLE_RECORD_DEST:
+                postToCPT(getEntityId(record, IGO_SAMPLE_ID_REGEX),
+                          getSamplePostBody(record), CPT_UPDATE_SAMPLE_RECORD_URL);
+                break;
+            case SAMPLE_STATUS_RECORD_DEST:
+                postToCPT(getEntityId(record, IGO_REQUEST_TRACKER_ID_REGEX),
+                          getRequestPostBody(record), CPT_SAMPLE_STATUS_RECORD_URL);
+                break;
+            default:
+                break;
         }
     }
 
-    private String getPostBody(String request) {
-        String igoRequestID = getRequestId(request);
+    private String getSamplePostBody(String sampleRecord) {
+        String igoSampleID = getEntityId(sampleRecord, IGO_SAMPLE_ID_REGEX);
+        if (igoSampleID.length() > 0) {
+            // this is to avoid filemaker data api error 1708
+            String escapedSample = sampleRecord.replace("\"", "\\\"");
+            return "{\"fieldData\":{\"igoSampleId\": \""
+                + igoSampleID + "\",\"sampleJSON\": " + escapedSample + "}}";
+        }
+        throw new RuntimeException("Error parsing request, cannot find requestId.",
+                                   new Throwable(sampleRecord));
+    }
+
+    private String getRequestPostBody(String requestRecord) {
+        String igoRequestID = getEntityId(requestRecord, IGO_REQUEST_ID_REGEX);
         if (igoRequestID.length() > 0) {
             // this is to avoid filemaker data api error 1708
-            String escapedRequest = request.replace("\"", "\\\"");
+            String escapedRequest = requestRecord.replace("\"", "\\\"");
             return "{\"fieldData\":{\"projectBatchNumber\": \""
                 + igoRequestID + "\",\"requestJSON\": " + escapedRequest + "}}";
         }
-        throw new RuntimeException("Error parsing request, cannot find requestId.", new Throwable(request));
+        throw new RuntimeException("Error parsing request, cannot find requestId.",
+                                   new Throwable(requestRecord));
     }
 
-    private String getRequestId(String request) {
-        Matcher matcher = IGO_REQUEST_ID_REGEX.matcher(request);
+    private String getEntityId(String entityRecord, Pattern regex) {
+        Matcher matcher = regex.matcher(entityRecord);
         if (matcher.find()) {
             return matcher.group(1);
         }
         return "";
+    }
+
+    private void postToCPT(String entityId, String postBody, String recordDest) throws Exception {
+        if (recordDest.isEmpty()) {
+            return;
+        }
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(getSessionToken());
+        try {
+            HttpEntity requestEntity = new HttpEntity<Object>(postBody, headers);
+            RestTemplate restTemplate = getRestTemplate();
+            ResponseEntity responseEntity =
+                restTemplate.exchange(recordDest,
+                                      HttpMethod.POST, requestEntity, Object.class);
+            if (!responseEntity.getStatusCode().is2xxSuccessful()) {
+                cptFileService.saveCPTPostFailure(responseEntity.getStatusCode().toString(),
+                                                  postBody);
+                if (LOG.isInfoEnabled()) {
+                    LOG.info("Unsuccessful postToCPT (Entity ID, CPT URL): "
+                             + entityId + ", " + recordDest);
+                }
+            } else if (LOG.isInfoEnabled()) {
+                LOG.info("Successful postToCPT (Entity ID, CPT URL): "
+                         + entityId + ", " + recordDest);
+            }
+        } catch (Exception e) {
+            if (postBody.equals("")) {
+                cptFileService.saveCPTPostFailure(e.getMessage(), e.getCause().getMessage());
+            } else {
+                cptFileService.saveCPTPostFailure(e.getMessage(), postBody);
+            }
+        }
     }
 
     private String getSessionToken() throws Exception {
