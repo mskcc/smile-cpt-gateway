@@ -40,10 +40,10 @@
     <spring.boot.version>2.3.3.RELEASE</spring.boot.version>
     <!-- smile messaging and shared entities dependency versions -->
     <smile_messaging_java.group>com.github.mskcc</smile_messaging_java.group>
-    <smile_messaging_java.version>1.3.3.RELEASE</smile_messaging_java.version>
+    <smile_messaging_java.version>1.3.4.RELEASE</smile_messaging_java.version>
     <!-- smile commons centralized config properties -->
     <smile_commons.groupId>com.github.mskcc</smile_commons.groupId>
-    <smile_commons.version>1.3.3.RELEASE</smile_commons.version>
+    <smile_commons.version>1.3.4.RELEASE</smile_commons.version>
   </properties>
 
   <dependencies>
